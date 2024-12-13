@@ -2,6 +2,7 @@
 import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { LoginUserDto } from '../dto/login-user.dto'; // Assuming you have this DTO
 
 @Controller('user')
 export class UserController {
@@ -17,6 +18,19 @@ export class UserController {
       };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Post('login')
+  async login(@Body() LoginUserDto: LoginUserDto) {
+    try {
+      const token = await this.userService.login(LoginUserDto);
+      return {
+        message: 'Login successful',
+        data: { token },
+      };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }
   }
 }

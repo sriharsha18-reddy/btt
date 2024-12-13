@@ -5,11 +5,18 @@ import { Model } from 'mongoose';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { User, UserDocument } from '../schemas/user.schema';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../interfaces/jwt-payload.interface'; // You'll create this interface for JWT payload
+import { LoginUserDto } from 'src/dto/login-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private jwtService: JwtService, // Injecting JwtService
+  ) {}
 
+  // Create user function
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { name, email, password } = createUserDto;
 
@@ -29,5 +36,31 @@ export class UserService {
     });
 
     return await newUser.save();
+  }
+
+  // Login function
+  // async login(email: string, password: string): Promise<{ accessToken: string }> {
+  async login(loginUserDto:LoginUserDto): Promise<{ accessToken: string }> {
+    const {email,password} = loginUserDto;
+    // Check if user exists
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Validate the password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Invalid credentials');
+    }
+
+    // Create JWT payload
+    const payload: JwtPayload = { email: user.email };
+    // const payload: JwtPayload = { email: user.email, sub: user._id };
+
+    // Generate JWT token
+    const accessToken = this.jwtService.sign(payload);
+
+    return { accessToken };
   }
 }
