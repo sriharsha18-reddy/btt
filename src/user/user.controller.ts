@@ -1,27 +1,22 @@
 // user.controller.ts
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('signup')
   async signup(@Body() createUserDto: CreateUserDto) {
-    const existingUser = await this.userService.findByEmail(createUserDto.email);
-    if (existingUser) {
-      throw new BadRequestException('Email is already in use');
+    try {
+      const user = await this.userService.createUser(createUserDto);
+      return {
+        message: 'User registered successfully',
+        data: user,
+      };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
-    return this.userService.create(createUserDto);
-  }
-
-  @Post('login')
-  async login(@Body() { email, password }: { email: string; password: string }) {
-    const user = await this.userService.findByEmail(email);
-    if (!user || user.password !== password) {
-      throw new BadRequestException('Invalid credentials');
-    }
-    return { message: 'Login successful', user }; // You can include token generation here if needed
   }
 }

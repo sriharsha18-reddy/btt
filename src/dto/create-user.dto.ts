@@ -1,6 +1,14 @@
 // dto/create-user.dto.ts
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+
 export class CreateUserDto {
-  readonly name: string;
-  readonly email: string;
-  readonly password: string;
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @MinLength(6)
+  password: string;
 }
